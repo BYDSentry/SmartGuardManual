@@ -16,7 +16,7 @@
         #toggleMenu {
             position: fixed;
             top: 50px;
-            right: 20px;
+            right: 80px;
             width: 50px;
             height: 50px;
             background: #333;
@@ -34,9 +34,7 @@
         }
 
         #languageMenu {
-            position: fixed;
-            top: 110px;
-            right: 20px;
+            position: absolute;
             background: white;
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -46,6 +44,9 @@
             flex-direction: column;
             gap: 6px;
             z-index: 1000;
+            width: 200px;
+            min-width: 200px;
+            max-width: 200px;
         }
 
         #languageMenu.show {
@@ -91,6 +92,11 @@
             display: none;
             z-index: 1002;
         }
+
+        /* Other */
+        #loadingIndicator a {
+            color: white;
+        }
     </style>
 </head>
 
@@ -109,13 +115,13 @@
         <button class="langButton" data-lang="he">עברית</button>
         <button class="langButton" data-lang="ru">Русский</button>
     </div>
-    <div class="loading" id="loadingIndicator">Translating... Visit BYDSentry.com/telegram for help.</div>
+    <div class="loading" id="loadingIndicator">Translating... Visit <a href="https://bydsentry.com/telegram" target="_blank">bydsentry.com/telegram</a> for help.</div>
     <div id="app"></div>
 
     <script src="static/js/chunk-vendors.111f4aba.js"></script>
     <script src="static/js/app.edf7c9aa.js"></script>
     <script>
-        const apiKey = 'AIzaSyBgtTvTZgIW691ftk9HI2-VHOPckM8NyPY';
+        const apiKey = '';  // Add your API here
         let currentLanguage = 'en';
         let isDragging = false;
         let dragThreshold = 10; // Threshold to differentiate between drag and click
@@ -131,7 +137,7 @@
                     },
                     body: JSON.stringify({
                         q: text,
-                        source: 'zh-CN',
+                        source: 'zh-CN', // If you need a different language set it here
                         target: targetLang,
                         format: 'text'
                     })
@@ -196,7 +202,19 @@
             if (!isDragging) {
                 const menu = document.getElementById('languageMenu');
                 menu.classList.toggle('show');
+                positionLanguageMenu();
             }
+        }
+
+        function positionLanguageMenu() {
+            const menu = document.getElementById('languageMenu');
+            const button = document.getElementById('toggleMenu');
+            const buttonRect = button.getBoundingClientRect();
+            const menuRect = menu.getBoundingClientRect();
+
+            // Change the menu position so that it is centered below the button
+            menu.style.top = `${buttonRect.bottom}px`;
+            menu.style.left = `${buttonRect.left + buttonRect.width / 2 - menuRect.width / 2}px`;
         }
 
         function makeButtonDraggable() {
@@ -222,15 +240,23 @@
             const drag = (e) => {
                 e.preventDefault();
                 const touch = e.touches ? e.touches[0] : e;
-                const dx = Math.abs(touch.clientX - startX);
-                const dy = Math.abs(touch.clientY - startY);
-                if (dx > dragThreshold || dy > dragThreshold) {
-                    isDragging = true;
-                }
-                if (!isDragging) return;
 
-                button.style.left = `${touch.clientX - offsetX}px`;
-                button.style.top = `${touch.clientY - offsetY}px`;
+                // Calculate the new position of the button.
+                let newLeft = touch.clientX - offsetX;
+                let newTop = touch.clientY - offsetY;
+
+                // Make sure you don't exceed the window limits.
+                const buttonWidth = button.offsetWidth;
+                const buttonHeight = button.offsetHeight;
+
+                if (newLeft < 0) newLeft = 0;
+                if (newTop < 0) newTop = 0;
+                if (newLeft + buttonWidth > window.innerWidth) newLeft = window.innerWidth - buttonWidth;
+                if (newTop + buttonHeight > window.innerHeight) newTop = window.innerHeight - buttonHeight;
+
+                // Update the button's position
+                button.style.left = `${newLeft}px`;
+                button.style.top = `${newTop}px`;
             };
 
             const endDrag = () => {
@@ -250,9 +276,9 @@
             observeDomChanges();
             document.getElementById('toggleMenu').addEventListener('click', toggleLanguageMenu);
             makeButtonDraggable();
+            translatePage('en');
             translatePage(currentLanguage);
         });
     </script>
 </body>
-
 </html>
